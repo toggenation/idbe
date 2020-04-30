@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ################################################################
 # Script: idbe.sh
 # Purpose: Parse iDevice backup directory contents, determine
@@ -8,7 +10,10 @@
 #          General Public License Version 2.0.
 #          See http://www.gnu.org/licenses/gpl-2.0.html
 #          for full license information.
+# From:    http://www.reverendlinux.com/linux/idbe/idbe.txt
+# Updates: James McDonald <james@toggen.com.au>
 ################################################################
+
 # Get user name
 USER=$(id -un)
 
@@ -16,7 +21,8 @@ USER=$(id -un)
 OIFS=$IFS
 
 # Set user backup directory
-BUD="/Users/$USER/Library/Application Support/MobileSync/Backup/"
+# remove space from Application Support as it chokes on it
+BUD="/Users/$USER/Library/ApplicationSupport/MobileSync/Backup/"
 
 # Get directory listing
 DIRLIST=$(ls -m "$BUD")
@@ -39,7 +45,7 @@ while true; do
 
     # Print a header
     clear
-    echo "iDevice Backup Processor V0.1"
+    echo "iDevice Backup Processor V0.2"
     echo ""
 
     # Display DTG of backups and ask user to choose
@@ -149,9 +155,12 @@ while true; do
 
         # Process the source directory
         # Get the list of files in the src dir
-        for f in $(ls "$SRC"); do
+
+        FILES=$(find "$SRC" -type f)
+
+        for f in $FILES; do
             # Get file type
-            FILE=$(file "$SRC/$f")
+            FILE=$(file "$f")
 
             # Split file at the : LEFT is file name, RIGHT is file type
             IFS=: read LEFT RIGHT <<<"$FILE"
@@ -161,53 +170,53 @@ while true; do
             set $RIGHT
 
             # Get Date and time for the file and format it
-            FDTG=$(stat -f "%t%Sm" "$SRC/$f")
+            FDTG=$(stat -f "%t%Sm" "$f")
             FDTG=$(echo ${FDTG// /-})
             FDTG=$(echo ${FDTG//:/})
             FDTG=$(sed -e 's/^[[:space:]]*//' <<<"$FDTG")
 
             # Copy the file over based on what type of file it is
             if [ "$2" = "image" ]; then
-                $(cp "$SRC/$f" "$TGT/Image/$FDTG.$1")
+                $(cp "$f" "$TGT/Image/$FDTG.$1")
                 echo "Extracted JPG Image File...continuing..."
             elif [ "$1" = "ASCII" ] || [ "$1" = "UTF-8" ] && [ "$2" != "C++" ]; then
-                $(cp "$SRC/$f" "$TGT/Txt/$FDTG.txt")
+                $(cp "$f" "$TGT/Txt/$FDTG.txt")
                 echo "Extracted Text File...continuing..."
             elif [ "$1" = "XML" ]; then
-                $(cp "$SRC/$f" "$TGT/Txt/$FDTG.xml")
+                $(cp "$f" "$TGT/Txt/$FDTG.xml")
                 echo "Extracted XML File...continuing..."
             elif [ "$1" = "HTML" ]; then
-                $(cp "$SRC/$f" "$TGT/Txt/$FDTG.html")
+                $(cp "$f" "$TGT/Txt/$FDTG.html")
                 echo "Extracted HTML File...continuing..."
             elif [ "$1" = "diff" ]; then
-                $(cp "$SRC/$f" "$TGT/Misc/$FDTG.diff")
+                $(cp "$f" "$TGT/Misc/$FDTG.diff")
                 echo "Extracted DIFF File...continuing..."
             elif [ "$2" = "C++" ]; then
-                $(cp "$SRC/$f" "$TGT/Misc/$FDTG.c")
+                $(cp "$f" "$TGT/Misc/$FDTG.c")
                 echo "Extracted C++ Text File...continuing..."
             elif [ "$2" = "Multi-Rate" ]; then
-                $(cp "$SRC/$f" "$TGT/Audio/$FDTG.amr")
+                $(cp "$f" "$TGT/Audio/$FDTG.amr")
                 echo "Extracted Audio File...continuing..."
             elif [ "$1" = "SQLite" ]; then
-                $(cp "$SRC/$f" "$TGT/DB/$FDTG.db")
+                $(cp "$f" "$TGT/DB/$FDTG.db")
                 echo "Extracted SQLite Database File...continuing..."
             elif [ "$2" = "binary" ]; then
-                $(cp "$SRC/$f" "$TGT/Misc/$FDTG.bin")
+                $(cp "$f" "$TGT/Misc/$FDTG.bin")
                 echo "Extracted Binary File...continuing..."
             elif [ "$1" = "gzip" ]; then
-                $(cp "$SRC/$f" "$TGT/Misc/$FDTG.gz")
+                $(cp "$f" "$TGT/Misc/$FDTG.gz")
                 echo "Extracted GZip Archive File...continuing..."
             elif [ "$1" = "data" ]; then
-                $(cp "$SRC/$f" "$TGT/Misc/$FDTG.data")
+                $(cp "$f" "$TGT/Misc/$FDTG.data")
                 echo "Extracted Data File...continuing..."
             elif [ "$1" = "ISO" ] && [ "$2" = "Media," ] && [ "$3" = "Apple" ]; then
-                $(cp "$SRC/$f" "$TGT/Video/$FDTG.mov")
+                $(cp "$f" "$TGT/Video/$FDTG.mov")
                 echo "Extracted Quicktime Video File...continuing..."
             elif [ "$1" = "ISO" ] && [ "$2" = "Media" ] && [ "$3" = "MPEG" ]; then
-                $(cp "$SRC/$f" "$TGT/MPEG/$FDTG.mpg")
+                $(cp "$f" "$TGT/MPEG/$FDTG.mpg")
                 echo "Extracted MPEG Video File...continuing..."
             else
-                $(cp "$SRC/$f" "$TGT/Misc/$FDTG")
+                $(cp "$f" "$TGT/Misc/$FDTG")
                 echo "Extracted Unknown File Type...continuing..."
             fi
         done
